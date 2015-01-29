@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DBHelper extends SQLiteOpenHelper {
 	
-	private static final int DB_VERSION = 1;
+	private static final int DB_VERSION = 3;
 	public static String DB_NAME = "Chat.db";
 
 	public DBHelper(Context context) {
@@ -19,8 +19,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
 		final String SQL_CREATE_CHAT_TABLE = "CREATE TABLE " + ChatsEntry.TABLE_NAME + " (" + 
 				ChatsEntry._ID + " INTEGER PRIMARY KEY," +
-				ChatsEntry.COLUMN_TIME + " INTEGER NOT NULL " +
-				ChatsEntry.COLUMN_SENDER + " TEXT NOT NULL " +
+				ChatsEntry.COLUMN_TIME + " INTEGER NOT NULL, " +
+				ChatsEntry.COLUMN_SENDER + " TEXT NOT NULL, " +
 				ChatsEntry.COLUMN_MESSAGE + " TEXT );";
 		
 		db.execSQL(SQL_CREATE_CHAT_TABLE);

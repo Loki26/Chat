@@ -15,25 +15,39 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager.LoaderCallbacks;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
 import data.ChatContract.ChatsEntry;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class PlaceholderFragment extends Fragment {
+public class PlaceholderFragment extends Fragment implements
+		LoaderCallbacks<Cursor> {
 
 	public final static String[] HELLO = { "Hellow", "How are U?", "LOL",
 			"What's your Name?", "I, Robot", "Follow white rabbit" };
 	private static final String LOG_TAG = "myLogs";
+	String message;
+	DialogAdapter mAdapter;
+	Thread sendM;
+	Button btn;
+	ListView lv;
 
 	public PlaceholderFragment() {
 	}
@@ -43,34 +57,78 @@ public class PlaceholderFragment extends Fragment {
 			Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_main, container,
 				false);
-		final String message = "What`s+your+problem?";
-		Thread sendM = new Thread(new Runnable() {
 
+		final EditText ins_message = (EditText) rootView
+				.findViewById(R.id.editText1);
+
+		btn = (Button) rootView.findViewById(R.id.button1);
+
+		Random r = new Random();
+		// message = HELLO[r.nextInt(5)];
+		
+		
+		
+		sendM = new Thread(new Runnable() {
+
+			
 			@Override
 			public void run() {
 				
+				
 				Log.d(LOG_TAG, "Sending: " + message);
-				sendMassage(message.replace("\\s", "\u002B"));
+				sendMassage(message.replace(" ", "+"));
 
 			}
 		});
-		
-		Calendar cal = Calendar.getInstance();
-		long time = cal.getTimeInMillis();
-		String time_str = String.valueOf(time);
-		String user = "User";
-		ContentValues cv = new ContentValues();
-		cv.put(ChatsEntry.COLUMN_TIME, time);
-		cv.put(ChatsEntry.COLUMN_SENDER, user);
-		cv.put(ChatsEntry.COLUMN_MESSAGE, message);
-		Uri insUri = getActivity().getContentResolver()
-				.insert(ChatsEntry.buildTimeUri(time), cv);
-		Log.d(LOG_TAG, "ins id = " + ChatsEntry.getTimeFromUri(insUri));
-		sendM.start();
+
+		// asynctask
+
+		btn.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				message = ins_message.getText().toString();
+				if (!message.equals("") && message != null) {
+
+					ins_message.setText("");
+
+					
+					ins_message.setText(""); Calendar cal =
+					Calendar.getInstance(); long time =
+					cal.getTimeInMillis(); String user = "User";
+					 
+					ContentValues cv = new ContentValues();
+					cv.put(ChatsEntry.COLUMN_TIME, time);
+					cv.put(ChatsEntry.COLUMN_SENDER, user);
+					cv.put(ChatsEntry.COLUMN_MESSAGE, message);
+					getActivity().getContentResolver().insert(
+					ChatsEntry.CONTENT_URI, cv); Log.d(LOG_TAG, "Sent: " +
+					message);
+					//sendM.start();
+					MyAsyncTask send = new MyAsyncTask();
+					send.execute();
+					
+					
+					
+				}
+
+			}
+		});
+
+		lv = (ListView) rootView.findViewById(R.id.listView1);
+		mAdapter = new DialogAdapter(getActivity(), null, 0);
+		lv.setAdapter(mAdapter);
 
 		// toCallAsyns();
 
 		return rootView;
+	}
+
+	@Override
+	public void onResume() {
+		getLoaderManager().restartLoader(0, null, this);
+		super.onResume();
 	}
 
 	private void sendMassage(String massage) {
@@ -114,6 +172,18 @@ public class PlaceholderFragment extends Fragment {
 		} else {
 			String resp = getMassageFromXML(inputStream);
 			Log.d(LOG_TAG, resp);
+			Calendar cal = Calendar.getInstance();
+			long time = cal.getTimeInMillis();
+			String user = "Bot";
+
+			ContentValues cv = new ContentValues();
+			cv.put(ChatsEntry.COLUMN_TIME, time);
+			cv.put(ChatsEntry.COLUMN_SENDER, user);
+			cv.put(ChatsEntry.COLUMN_MESSAGE, resp);
+			Uri insUri = getActivity().getContentResolver().insert(
+					ChatsEntry.CONTENT_URI, cv);
+			Log.d(LOG_TAG, "ins id = " + ChatsEntry.getTimeFromUri(insUri));
+			
 		}
 
 	}
@@ -154,42 +224,18 @@ public class PlaceholderFragment extends Fragment {
 				e.printStackTrace();
 			}
 		}
-
+		
 		return response;
 	}
 
-	public void toCallAsyns() {
-		final Handler handler = new Handler();
-		Timer timer = new Timer();
-		TimerTask doAsynchronousTask = new TimerTask() {
-
-			@Override
-			public void run() {
-				handler.post(new Runnable() {
-
-					@Override
-					public void run() {
-						MyAsyncTask task = new MyAsyncTask();
-						task.execute();
-
-					}
-				});
-
-			}
-		};
-		Random r = new Random();
-		timer.schedule(doAsynchronousTask, 0, 2000 + r.nextInt(2000));
-		// execute in every 2 + random(2) sec
-
-	}
 
 	private class MyAsyncTask extends AsyncTask<String, Object, String> {
 
 		@Override
 		protected String doInBackground(String... params) {
+			Log.d(LOG_TAG, "Sending from Async: " + message);
+			sendMassage(message.replace(" ", "+"));
 
-			Random r = new Random();
-			Log.d("myLogs", HELLO[r.nextInt(5)]);
 			return null;
 
 		}
@@ -199,6 +245,28 @@ public class PlaceholderFragment extends Fragment {
 			super.onPostExecute(result);
 			// Update UI
 		}
+	}
+
+	@Override
+	public Loader<Cursor> onCreateLoader(int arg0, Bundle arg1) {
+		String projection[] = new String[] { ChatsEntry._ID,
+				ChatsEntry.COLUMN_MESSAGE, ChatsEntry.COLUMN_SENDER,
+				ChatsEntry.COLUMN_TIME };
+		return new CursorLoader(getActivity(), ChatsEntry.CONTENT_URI,
+				projection, null, null, null);
+	}
+
+	@Override
+	public void onLoadFinished(Loader<Cursor> arg0, Cursor arg1) {
+		mAdapter.swapCursor(arg1);
+		lv.setSelection(mAdapter.getCount() - 1);
+
+	}
+
+	@Override
+	public void onLoaderReset(Loader<Cursor> arg0) {
+		mAdapter.swapCursor(null);
+
 	}
 
 }
