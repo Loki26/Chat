@@ -1,5 +1,6 @@
 package com.chat;
 
+import data.ChatContract.ChatsEntry;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
@@ -34,8 +35,8 @@ public class MainActivity extends ActionBarActivity {
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			return true;
+		if (id == R.id.action_delete) {
+			this.getContentResolver().delete(ChatsEntry.CONTENT_URI, null, null);
 		}
 		return super.onOptionsItemSelected(item);
 	}

@@ -24,6 +24,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,6 +49,7 @@ public class PlaceholderFragment extends Fragment implements
 	Thread sendM;
 	Button btn;
 	ListView lv;
+	int pos;
 
 	public PlaceholderFragment() {
 	}
@@ -63,25 +65,9 @@ public class PlaceholderFragment extends Fragment implements
 
 		btn = (Button) rootView.findViewById(R.id.button1);
 
-		Random r = new Random();
-		// message = HELLO[r.nextInt(5)];
-		
-		
-		
-		sendM = new Thread(new Runnable() {
-
-			
-			@Override
-			public void run() {
-				
-				
-				Log.d(LOG_TAG, "Sending: " + message);
-				sendMassage(message.replace(" ", "+"));
-
-			}
-		});
-
-		// asynctask
+		lv = (ListView) rootView.findViewById(R.id.listView1);
+		mAdapter = new DialogAdapter(getActivity(), null, 0);
+		lv.setAdapter(mAdapter);
 
 		btn.setOnClickListener(new OnClickListener() {
 
@@ -92,33 +78,27 @@ public class PlaceholderFragment extends Fragment implements
 				if (!message.equals("") && message != null) {
 
 					ins_message.setText("");
+					message = message.replace("#",
+							"<font color='#FF0000'>#</font>");
+					Log.d(LOG_TAG, message);
+					Calendar cal = Calendar.getInstance();
+					long time = cal.getTimeInMillis();
+					String user = "User";
 
-					
-					ins_message.setText(""); Calendar cal =
-					Calendar.getInstance(); long time =
-					cal.getTimeInMillis(); String user = "User";
-					 
 					ContentValues cv = new ContentValues();
 					cv.put(ChatsEntry.COLUMN_TIME, time);
 					cv.put(ChatsEntry.COLUMN_SENDER, user);
 					cv.put(ChatsEntry.COLUMN_MESSAGE, message);
 					getActivity().getContentResolver().insert(
-					ChatsEntry.CONTENT_URI, cv); Log.d(LOG_TAG, "Sent: " +
-					message);
-					//sendM.start();
+							ChatsEntry.CONTENT_URI, cv);
+					Log.d(LOG_TAG, "Sent: " + message);
+					pos = lv.getFirstVisiblePosition();
 					MyAsyncTask send = new MyAsyncTask();
 					send.execute();
-					
-					
-					
-				}
 
+				}
 			}
 		});
-
-		lv = (ListView) rootView.findViewById(R.id.listView1);
-		mAdapter = new DialogAdapter(getActivity(), null, 0);
-		lv.setAdapter(mAdapter);
 
 		// toCallAsyns();
 
@@ -131,7 +111,7 @@ public class PlaceholderFragment extends Fragment implements
 		super.onResume();
 	}
 
-	private void sendMassage(String massage) {
+	private void sendMassage(String message) {
 		/*
 		 * http://www.botlibre.com/rest/botlibre/form-chat?instance=165&message=what
 		 * +is+a+chat+bot
@@ -141,7 +121,7 @@ public class PlaceholderFragment extends Fragment implements
 		try {
 			myUrl = new URL(
 					"http://www.botlibre.com/rest/botlibre/form-chat?instance=165&application=6833358163211651434&message="
-							+ massage);
+							+ message);
 
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -167,24 +147,27 @@ public class PlaceholderFragment extends Fragment implements
 			e.printStackTrace();
 		}
 
+		String resp;
 		if (inputStream == null) {
 			Log.d(LOG_TAG, "ups");
+			resp = "There is no net connection, so let me say: "
+					+ HELLO[new Random().nextInt(5)];
 		} else {
-			String resp = getMassageFromXML(inputStream);
+			resp = getMassageFromXML(inputStream);
 			Log.d(LOG_TAG, resp);
-			Calendar cal = Calendar.getInstance();
-			long time = cal.getTimeInMillis();
-			String user = "Bot";
-
-			ContentValues cv = new ContentValues();
-			cv.put(ChatsEntry.COLUMN_TIME, time);
-			cv.put(ChatsEntry.COLUMN_SENDER, user);
-			cv.put(ChatsEntry.COLUMN_MESSAGE, resp);
-			Uri insUri = getActivity().getContentResolver().insert(
-					ChatsEntry.CONTENT_URI, cv);
-			Log.d(LOG_TAG, "ins id = " + ChatsEntry.getTimeFromUri(insUri));
-			
 		}
+		Calendar cal = Calendar.getInstance();
+		long time = cal.getTimeInMillis();
+		String user = "Bot";
+		resp.replace("#",
+				"<font color='#FF0000'>#</font>");
+		ContentValues cv = new ContentValues();
+		cv.put(ChatsEntry.COLUMN_TIME, time);
+		cv.put(ChatsEntry.COLUMN_SENDER, user);
+		cv.put(ChatsEntry.COLUMN_MESSAGE, resp);
+		Uri insUri = getActivity().getContentResolver().insert(
+				ChatsEntry.CONTENT_URI, cv);
+		Log.d(LOG_TAG, "ins id = " + ChatsEntry.getTimeFromUri(insUri));
 
 	}
 
@@ -224,10 +207,9 @@ public class PlaceholderFragment extends Fragment implements
 				e.printStackTrace();
 			}
 		}
-		
+
 		return response;
 	}
-
 
 	private class MyAsyncTask extends AsyncTask<String, Object, String> {
 

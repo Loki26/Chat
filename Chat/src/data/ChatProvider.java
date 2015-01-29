@@ -17,7 +17,6 @@ public class ChatProvider extends ContentProvider {
 	private static final int TIME = 100;
 	private static final int USER_AND_MESSAGE = 200;
 	private static final int ALL_ENTRIES = 300;
-	private static final int DELETE_ALL = 400;
 
 	private static final UriMatcher sUriMatcher = buildUriMatcher();
 
@@ -111,12 +110,13 @@ public class ChatProvider extends ContentProvider {
 		SQLiteDatabase db = mHepler.getWritableDatabase();
 		int row_amount = 0;
 		switch (sUriMatcher.match(uri)) {
-		case DELETE_ALL:
+		case ALL_ENTRIES:
 			row_amount = db.delete(ChatsEntry.TABLE_NAME, null, null);
 			break;
 		}
-		
-		
+		db.close();
+		mHepler.close();
+		getContext().getContentResolver().notifyChange(uri, null);
 		return row_amount;
 	}
 

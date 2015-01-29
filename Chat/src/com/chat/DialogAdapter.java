@@ -3,6 +3,7 @@ package com.chat;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,7 +31,7 @@ public class DialogAdapter extends CursorAdapter {
 	public void bindView(View view, Context context, Cursor cursor) {
 
 		TextView message = (TextView) view.findViewById(R.id.message_txt);
-		message.setText(cursor.getString(1));
+		message.setText(Html.fromHtml(cursor.getString(1)));
 		TextView sender = (TextView) view.findViewById(R.id.sender_txt);
 		sender.setText(cursor.getString(2));
 		
